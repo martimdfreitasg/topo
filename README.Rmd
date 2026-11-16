@@ -80,9 +80,3 @@ cluster_data <- topoclust(
 # View the first few sequence assignments
 head(cluster_data)
 ```
-
-## Citation
-
-If you use `topo` in your research, please cite it:
-
->
