@@ -94,9 +94,3 @@ head(cluster_data)
 #> 5          Seq_Five       Seq_Five Unassigned
 #> 6           Seq_Six        Seq_Six  Cluster 1
 ```
-
-## Citation
-
-If you use `topo` in your research, please cite it:
-
-> 
