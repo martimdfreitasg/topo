@@ -5,6 +5,9 @@
 #' @param metric Distance metric ("gaps", "residues", "both").
 #' @return A dist object with the deduplicated matrix and metadata attached as attributes.
 #' @export
+#' @examples
+#' fasta_path <- system.file("extdata", "test.fasta", package = "topo")
+#' gap_dist <- topodist(fasta_path, metric = "gaps")
 topodist <- function(fasta_path, topomatrix = NULL, metric = "gaps") {
 
   if (is.null(topomatrix)) {

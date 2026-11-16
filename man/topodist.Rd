@@ -19,3 +19,7 @@ A dist object with the deduplicated matrix and metadata attached as attributes.
 \description{
 Calculate Alignment Distances
 }
+\examples{
+fasta_path <- system.file("extdata", "test.fasta", package = "topo")
+gap_dist <- topodist(fasta_path, metric = "gaps")
+}

@@ -9,7 +9,6 @@ topoplot(
   metric = "gaps",
   highlight_regions = NULL,
   highlight_colors = NULL,
-  seed = 12345,
   bootstrap = 1,
   boot_threshold = NULL
 )
@@ -23,8 +22,6 @@ topoplot(
 
 \item{highlight_colors}{Character vector of hex codes corresponding to highlight_regions.}
 
-\item{seed}{Random seed for reproducible clustering and bootstrapping.}
-
 \item{bootstrap}{Optional: Bootstrap iterations. When set to 1, bootstrap is omitted.}
 
 \item{boot_threshold}{Optional: Numeric threshold below which nodes are collapsed into a polytomy.}
@@ -34,4 +31,8 @@ A combined ggtree plot object.
 }
 \description{
 Plot Combined Dendrogram and Heatmap
+}
+\examples{
+fasta_path <- system.file("extdata", "test.fasta", package = "topo")
+final_plot <- topoplot(fasta_path, metric = "gaps")
 }

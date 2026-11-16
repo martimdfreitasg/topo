@@ -4,14 +4,12 @@
 \alias{topoclust}
 \title{Extract Cluster and Group Mapping}
 \usage{
-topoclust(fasta_path, metric = "gaps", seed = 12345, dist_mat = NULL)
+topoclust(fasta_path, metric = "gaps", dist_mat = NULL)
 }
 \arguments{
 \item{fasta_path}{Path to the alignment fasta file or an XStringSet object.}
 
 \item{metric}{Distance metric ("gaps", "residues", "both").}
-
-\item{seed}{Random seed for reproducible clustering.}
 
 \item{dist_mat}{Optional: Pre-calculated distance matrix from topodist().}
 }
@@ -20,4 +18,8 @@ A dataframe mapping original sequences to their deduplicated group and assigned 
 }
 \description{
 Extract Cluster and Group Mapping
+}
+\examples{
+fasta_path <- system.file("extdata", "test.fasta", package = "topo")
+clusters <- topoclust(fasta_path, metric = "gaps")
 }

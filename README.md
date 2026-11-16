@@ -78,10 +78,10 @@ the duplicated sequences belong to.
 
 ``` r
 # Extract the cluster mapping dataframe
+set.seed(12345)
 cluster_data <- topoclust(
   fasta_path = fasta_path, 
-  metric = "gaps", 
-  seed = 12345
+  metric = "gaps"
 )
 
 # View the first few sequence assignments

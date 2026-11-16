@@ -10,7 +10,6 @@ topodend(
   metric = "gaps",
   dist_mat = NULL,
   bootstrap = 1,
-  seed = 1,
   show_tiplab = TRUE,
   boot_threshold = NULL
 )
@@ -26,8 +25,6 @@ topodend(
 
 \item{bootstrap}{Optional: Bootstrap iterations. When set to 1, bootstrap is omitted.}
 
-\item{seed}{Optional: Random seed for bootstrapping.}
-
 \item{show_tiplab}{Optional: Logical to toggle tip labels on the base tree. Default is TRUE.}
 
 \item{boot_threshold}{Optional: Numeric threshold below which nodes are collapsed into a polytomy.}
@@ -37,4 +34,8 @@ A list containing the raw phylo object and the rendered ggtree object.
 }
 \description{
 Plot Distance Dendrogram
+}
+\examples{
+fasta_path <- system.file("extdata", "test.fasta", package = "topo")
+dend <- topodend(fasta_path, metric = "gaps")
 }

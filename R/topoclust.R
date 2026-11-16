@@ -2,18 +2,18 @@
 #'
 #' @param fasta_path Path to the alignment fasta file or an XStringSet object.
 #' @param metric Distance metric ("gaps", "residues", "both").
-#' @param seed Random seed for reproducible clustering.
 #' @param dist_mat Optional: Pre-calculated distance matrix from topodist().
 #' @return A dataframe mapping original sequences to their deduplicated group and assigned cluster.
 #' @export
-topoclust <- function(fasta_path, metric = "gaps", seed = 12345, dist_mat = NULL) {
+#' @examples
+#' fasta_path <- system.file("extdata", "test.fasta", package = "topo")
+#' clusters <- topoclust(fasta_path, metric = "gaps")
+topoclust <- function(fasta_path, metric = "gaps", dist_mat = NULL) {
 
   # Retrieve or compute the distance matrix
   if (is.null(dist_mat)) {
     dist_mat <- topodist(fasta_path, metric = metric)
   }
-  set.seed(seed)
-
   unique_bin <- attr(dist_mat, "matrix")
 
   # Perform Average Linkage (UPGMA) hierarchical clustering

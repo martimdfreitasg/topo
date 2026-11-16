@@ -1,25 +1,28 @@
 Package: topo
-Title: Evaluating gap and residue topologies in sequence alignments
+Title: Evaluating Gap and Residue Topologies in Sequence Alignments
 Version: 0.1.0
-Authors@R: 
+Authors@R: c(
     person("Martim", "de Freitas", 
            email = "m.gordinhol@campus.fct.unl.pt", 
            role = c("aut", "cre"), 
-           comment = c(ORCID = "0009-0001-0138-8057"))
+           comment = c(ORCID = "0009-0001-0138-8057")),
     person("Pedro", "Stumpo",
            role = c("aut"), 
-           comment = c(ORCID = "0009-0007-1035-6464"))
+           comment = c(ORCID = "0009-0007-1035-6464")),
     person("Leonor", "Guerra-Guimarães",
            role = c("aut"), 
-           comment = c(ORCID = "0000-0002-9676-1036"))
+           comment = c(ORCID = "0000-0002-9676-1036")),
     person("Antonio Jesús", "Muñoz-Pajares",
            role = c("aut"), 
-           comment = c(ORCID = "0000-0002-2505-8116"))
+           comment = c(ORCID = "0000-0002-2505-8116")),
     person("Carla", "Pinheiro",
            role = c("cph", "fnd"), 
            comment = c(ORCID = "0000-0002-7799-0183"))
-
-Description: Evaluates topology of alignment gaps and residues with UPGMA clustering and dynamic tree-cutting. Makes both dendrograms and structural heatmaps.
+    )
+Description: Provides tools to evaluate the topology of alignment gaps and 
+    residues using unweighted pair group method with arithmetic mean (UPGMA) 
+    clustering and dynamic tree-cutting. It generates both distance dendrograms 
+    and structural heatmaps for structural alignment pattern analysis.
 License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

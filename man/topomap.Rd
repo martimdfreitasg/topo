@@ -9,7 +9,6 @@ topomap(
   metric = "gaps",
   highlight_regions = NULL,
   highlight_colors = NULL,
-  seed = 12345,
   dist_mat = NULL,
   cluster_mapping = NULL
 )
@@ -23,8 +22,6 @@ topomap(
 
 \item{highlight_colors}{Character vector of hex codes corresponding to highlight_regions.}
 
-\item{seed}{Random seed for reproducible clustering.}
-
 \item{dist_mat}{Optional: Pre-calculated distance matrix from topodist().}
 
 \item{cluster_mapping}{Optional: Pre-calculated mapping from topoclust().}
@@ -34,4 +31,8 @@ A ggtree plot object containing the alignment heatmap and cluster ribbon.
 }
 \description{
 Plot Alignment Matrix and Clusters
+}
+\examples{
+fasta_path <- system.file("extdata", "test.fasta", package = "topo")
+map_plot <- topomap(fasta_path, metric = "gaps")
 }

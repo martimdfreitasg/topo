@@ -4,16 +4,18 @@
 #' @param metric Distance metric ("gaps", "residues", "both").
 #' @param highlight_regions List of numeric vectors indicating column indices to highlight.
 #' @param highlight_colors Character vector of hex codes corresponding to highlight_regions.
-#' @param seed Random seed for reproducible clustering.
 #' @param dist_mat Optional: Pre-calculated distance matrix from topodist().
 #' @param cluster_mapping Optional: Pre-calculated mapping from topoclust().
 #' @return A ggtree plot object containing the alignment heatmap and cluster ribbon.
 #' @export
-topomap <- function(fasta_path, metric = "gaps", highlight_regions = NULL, highlight_colors = NULL, seed = 12345, dist_mat = NULL, cluster_mapping = NULL) {
+#' @examples
+#' fasta_path <- system.file("extdata", "test.fasta", package = "topo")
+#' map_plot <- topomap(fasta_path, metric = "gaps")
+topomap <- function(fasta_path, metric = "gaps", highlight_regions = NULL, highlight_colors = NULL, dist_mat = NULL, cluster_mapping = NULL) {
 
   # Retrieve upstream data prerequisites
   if (is.null(dist_mat)) dist_mat <- topodist(fasta_path, metric = metric)
-  if (is.null(cluster_mapping)) cluster_mapping <- topoclust(fasta_path, metric = metric, seed = seed, dist_mat = dist_mat)
+  if (is.null(cluster_mapping)) cluster_mapping <- topoclust(fasta_path, metric = metric, dist_mat = dist_mat)
 
   unique_bin <- attr(dist_mat, "matrix")
   aln_dend <- stats::hclust(dist_mat, method = "average")

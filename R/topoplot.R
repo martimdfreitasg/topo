@@ -4,19 +4,22 @@
 #' @param metric Distance metric ("gaps", "residues", "both").
 #' @param highlight_regions List of numeric vectors indicating column indices to highlight.
 #' @param highlight_colors Character vector of hex codes corresponding to highlight_regions.
-#' @param seed Random seed for reproducible clustering and bootstrapping.
 #' @param bootstrap Optional: Bootstrap iterations. When set to 1, bootstrap is omitted.
 #' @param boot_threshold Optional: Numeric threshold below which nodes are collapsed into a polytomy.
 #' @return A combined ggtree plot object.
 #' @export
-topoplot <- function(fasta_path, metric = "gaps", highlight_regions = NULL, highlight_colors = NULL, seed = 12345, bootstrap = 1, boot_threshold = NULL) {
+#' @examples
+#' fasta_path <- system.file("extdata", "test.fasta", package = "topo")
+#' final_plot <- topoplot(fasta_path, metric = "gaps")
+topoplot <- function(fasta_path, metric = "gaps", highlight_regions = NULL, highlight_colors = NULL, bootstrap = 1, boot_threshold = NULL) {
 
   # Execute underlying distance and cluster computations
   dist_mat <- topodist(fasta_path, metric = metric)
-  cluster_mapping <- topoclust(fasta_path, metric = metric, seed = seed, dist_mat = dist_mat)
+  cluster_mapping <- topoclust(fasta_path, metric = metric, dist_mat = dist_mat)
 
   # Build base dendrogram and extract both tree geometry and rendered ggtree
-  dend_obj <- topodend(fasta_path, metric = metric, dist_mat = dist_mat, bootstrap = bootstrap, seed = seed, show_tiplab = FALSE, boot_threshold = boot_threshold)
+  # Build base dendrogram and extract both tree geometry and rendered ggtree
+  dend_obj <- topodend(fasta_path, metric = metric, dist_mat = dist_mat, bootstrap = bootstrap, show_tiplab = FALSE, boot_threshold = boot_threshold)
   p_tree <- dend_obj$as_ggtree
 
   unique_bin <- attr(dist_mat, "matrix")

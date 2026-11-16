@@ -5,12 +5,14 @@
 #' @param metric Distance metric ("gaps", "residues", "both").
 #' @param dist_mat Optional: Pre-calculated distance matrix from topodist().
 #' @param bootstrap Optional: Bootstrap iterations. When set to 1, bootstrap is omitted.
-#' @param seed Optional: Random seed for bootstrapping.
 #' @param show_tiplab Optional: Logical to toggle tip labels on the base tree. Default is TRUE.
 #' @param boot_threshold Optional: Numeric threshold below which nodes are collapsed into a polytomy.
 #' @return A list containing the raw phylo object and the rendered ggtree object.
 #' @export
-topodend <- function(fasta_path, topomatrix = NULL, metric = "gaps", dist_mat = NULL, bootstrap = 1, seed = 1, show_tiplab = TRUE, boot_threshold = NULL) {
+#' @examples
+#' fasta_path <- system.file("extdata", "test.fasta", package = "topo")
+#' dend <- topodend(fasta_path, metric = "gaps")
+topodend <- function(fasta_path, topomatrix = NULL, metric = "gaps", dist_mat = NULL, bootstrap = 1, show_tiplab = TRUE, boot_threshold = NULL) {
 
   if (is.null(dist_mat)) {
     dist_mat <- topodist(fasta_path, topomatrix, metric = metric)
