@@ -3,7 +3,7 @@ Title: Evaluating Gap and Residue Topologies in Sequence Alignments
 Version: 0.1.0
 Authors@R: c(
     person("Martim", "de Freitas", 
-           email = "m.gordinhol@campus.fct.unl.pt", 
+           email = "m.gordinho@campus.fct.unl.pt", 
            role = c("aut", "cre"), 
            comment = c(ORCID = "0009-0001-0138-8057")),
     person("Pedro", "Stumpo",
