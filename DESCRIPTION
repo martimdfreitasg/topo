@@ -1,5 +1,5 @@
 Package: topo
-Title: Analysis and Visualization of Structural Alignment Patterns
+Title: Evaluating gap and residue topologies in sequence alignments
 Version: 0.1.0
 Authors@R: 
     person("Martim", "de Freitas", 
