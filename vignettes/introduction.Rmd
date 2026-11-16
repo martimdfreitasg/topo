@@ -1,0 +1,96 @@
+---
+title: "Evaluating Sequence Topology with topo"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Evaluating Sequence Topology with topo}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 8,
+  fig.height = 6,
+  out.width = "100%"
+)
+```
+
+## Overview
+
+In traditional phylogenetic analysis, standard substitution models are typically used to build evolutionary trees. However, in structurally diverse datasets, the specific topology of insertions and deletions (indels) provides crucial evolutionary and functional context that is overlooked. These structural shifts tend to be evaluated qualitatively by visually inspecting alignments, rather than applying concrete metrics to assess how sequences differ in their gap or residue distributions. 
+
+The `topo` package is designed to explicitly quantify these topological shifts. It allows researchers to move beyond eyeballing alignments by providing rigorous distance metrics based on gap and/or residue architectures, and guide the initial part of more complex pipelines. 
+
+This vignette demonstrates how to extract topology-based distance matrices, dynamically cluster sequences, and generate publication-ready visualizations. While `topo` supports gap, residue, and combined Hamming distances, this tutorial focuses on evaluating **gap topology**, on a protein alignment.
+
+```{r setup, message=FALSE, warning=FALSE}
+library(topo)
+```
+
+## 1. Calculating Topological Distances
+
+The first step in the pipeline is computing the distance matrix using `topodist()`. 
+
+Distances can be evaluated based on gap presence/absence (`metric = "gaps"`), residue presence/absence (`metric = "residues"`), or a combined topological distance (`metric = "both"`). 
+
+For this example, we will isolate the structural presence and absence of indels. `topodist()` converts the sequence alignment into a binary matrix and calculates the **Jaccard distance**, deduplicating identical structural architectures.
+
+```{r distances}
+# Locate the synthetic FASTA alignment bundled with the package
+fasta_path <- system.file("extdata", "test.fasta", package = "topo")
+
+# Calculate Jaccard distance based purely on gap topology
+gap_matrix <- topodist(fasta_path, metric = "gaps")
+```
+
+## 2. Structural Clustering
+
+With the topological distance matrix computed, `topoclust()` applies Average Linkage (UPGMA) hierarchical clustering. It utilizes the `dynamicTreeCut` algorithm to assign sequences into discrete structural groups, an approach effective for managing unbalanced datasets. 
+
+Because `topodist()` deduplicates sequences under the hood, `topoclust()` instantly maps the original duplicated FASTA entries back to their respective assigned groups.
+
+```{r clustering}
+# Extract the cluster mapping dataframe
+clusters <- topoclust(fasta_path, metric = "gaps", seed = 12345)
+
+# View the first few sequence assignments
+head(clusters)
+```
+
+## 3. Visualization: Polytomies and Domain Highlighting
+
+The master wrapper `topoplot()` combines distance calculation, clustering, and dendrogram generation into a single, aligned `ggtree` visualization. It introduces two QOL features for biological interpretation: **Visual Polytomies** and **Region Highlighting**.
+
+### Visual Polytomies
+By setting a `boot_threshold`, branches that fail to meet a required bootstrap support percentage are visually collapsed into polytomies (branch length = 0). This prevents low-confidence dichotomies from misleading visual interpretation, all without altering the underlying binary matrix required by the clustering algorithm.
+
+### Highlighting Functional Domains
+A major advantage of `topo` is the ability to map specific biological features—such as signal peptides, transmembrane domains, or conserved active sites—directly onto the alignment matrix. By passing a list of column indices to `highlight_regions` and assigning hex codes in `highlight_colors`, you can contextualize structural topologies relative to known functional domains. 
+
+```{r plot, fig.align='center', fig.width=10, fig.height=6}
+# Generate the full phylogenetic topology heatmap
+p <- topoplot(
+  fasta_path = fasta_path,
+  metric = "gaps",
+  bootstrap = 100,                  
+  boot_threshold = 70,              # Visually collapse branches with <70% support
+  
+  # Highlight multiple distinct structural domains (e.g., a signal peptide and an active site)
+  highlight_regions = list(1:100, 150:180),  
+  highlight_colors = c("#cd5cd8", "#42b9f5")   
+)
+
+p
+```
+
+### Interpreting the Plot
+In the resulting figure:
+
+*   **The Dendrogram (Left):** Branch lengths represent the chosen distance metric (e.g., Jaccard distance between gap profiles). Visually flat, multi-pronged branches indicate low-confidence polytomies.
+*   **The Cluster Ribbon (Middle):** Dynamically assigned structural groups.
+*   **The Matrix (Right):** White blocks represent gap regions (indels), while dark grey blocks represent amino acid residues. 
+*   **The Highlights:** The colored blocks overlaying the matrix correspond to domains defined in `highlight_regions`, allowing you to see exactly which clusters share deletions or insertions within those biological zones. 
+
+By layering domain highlights over topological clustering, researchers can rapidly classify sequences based on physical architecture differences that directly impact protein function.
