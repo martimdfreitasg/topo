@@ -6,6 +6,19 @@ Authors@R:
            email = "m.gordinhol@campus.fct.unl.pt", 
            role = c("aut", "cre"), 
            comment = c(ORCID = "0009-0001-0138-8057"))
+    person("Pedro", "Stumpo",
+           role = c("aut"), 
+           comment = c(ORCID = "0009-0007-1035-6464"))
+    person("Leonor", "Guerra-Guimarães",
+           role = c("aut"), 
+           comment = c(ORCID = "0000-0002-9676-1036"))
+    person("Antonio Jesús", "Muñoz-Pajares",
+           role = c("aut"), 
+           comment = c(ORCID = "0000-0002-2505-8116"))
+    person("Carla", "Pinheiro",
+           role = c("cph", "fnd"), 
+           comment = c(ORCID = "0000-0002-7799-0183"))
+
 Description: Evaluates topology of alignment gaps and residues with UPGMA clustering and dynamic tree-cutting. Makes both dendrograms and structural heatmaps.
 License: GPL-3
 Encoding: UTF-8
