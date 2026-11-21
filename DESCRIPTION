@@ -22,7 +22,7 @@ Authors@R: c(
 Description: Provides tools to evaluate the topology of alignment gaps and 
     residues using unweighted pair group method with arithmetic mean (UPGMA) 
     clustering and dynamic tree-cutting. It generates both distance dendrograms 
-    and structural heatmaps for structural alignment pattern analysis.
+    and alignment diagrams for structural pattern analysis.
 License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
