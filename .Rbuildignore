@@ -1,4 +1,9 @@
-^PhyloGaps\.Rproj$
-^\.Rproj\.user$
 ^topo\.Rproj$
+^\.Rproj\.user$
 ^README\.Rmd$
+^README\.html$
+^NEWS\.html$
+^\.git
+^\.github$
+^doc$
+^Meta$

@@ -2,24 +2,70 @@
 % Please edit documentation in R/topodist.R
 \name{topodist}
 \alias{topodist}
-\title{Calculate Alignment Distances}
+\title{Calculate Alignment Topological Distances}
 \usage{
-topodist(fasta_path, topomatrix = NULL, metric = "gaps")
+topodist(
+  fasta_path = NULL,
+  topomatrix = NULL,
+  metric = c("gaps", "residues", "both")
+)
 }
 \arguments{
-\item{fasta_path}{Path to the alignment fasta file or an XStringSet object.}
+\item{fasta_path}{Path to a FASTA alignment file, or an \code{ape::AAbin} /
+\code{ape::DNAbin} object. Optional if \code{topomatrix} is provided.}
 
-\item{topomatrix}{Optional: Pre-processed matrix to override fasta file input.}
+\item{topomatrix}{Optional numeric binary matrix (\code{0} = residue, \code{1} = gap)
+used directly instead of reading \code{fasta_path} (primarily for internal
+bootstrapping or pre-processed matrices).}
 
-\item{metric}{Distance metric ("gaps", "residues", "both").}
+\item{metric}{Character string specifying the topological distance metric:
+one of \code{"gaps"} (default), \code{"residues"}, or \code{"both"}.}
 }
 \value{
-A dist object with the deduplicated matrix and metadata attached as attributes.
+A \code{stats::dist} object of pairwise topological distances among unique
+sequence topologies, with the following attributes attached:
+\itemize{
+\item \code{matrix}: Deduplicated binary matrix (\code{0} = residue, \code{1} = gap).
+\item \code{metric}: Distance metric used.
+\item \code{assigned_groups}: Character vector mapping each input sequence to
+its representative tip/group label.
+\item \code{original_names}: Character vector of original sequence headers.
+}
 }
 \description{
-Calculate Alignment Distances
+Computes pairwise topological distances between sequences in a multiple
+sequence alignment based on binary gap/residue patterns.
+}
+\details{
+Each aligned sequence is encoded as a binary vector where gaps (\code{"-"}) are
+represented as \code{1} and residue positions as \code{0}. Sequences sharing
+the same pattern are collapsed into a single
+representative topology before distance computation to avoid redundant
+calculations and zero-length clusters; the mapping between original headers
+and representative groups is stored in attributes of the returned object.
+
+Three complementary distance metrics are supported:
+\itemize{
+\item \code{"gaps"}: Asymmetric Jaccard distance computed on gap positions
+(\code{stats::dist(x, method = "binary")}). Shared residue positions
+(double-zeros) are ignored, focusing on shared insertion/deletion
+(indels).
+\item \code{"residues"}: Asymmetric Jaccard distance computed on
+residue positions (\code{stats::dist(1 - x, method = "binary")}). Shared gap
+blocks are ignored, which is suited to sparse alignments containing
+lineage-specific insertions or partial sequences.
+\item \code{"both"}: Normalized Hamming distance
+(\code{stats::dist(x, method = "manhattan") / ncol(x)}), weighting shared gaps
+and residues across all alignment columns.
+}
 }
 \examples{
-fasta_path <- system.file("extdata", "test.fasta", package = "topo")
-gap_dist <- topodist(fasta_path, metric = "gaps")
+fasta_path = system.file("extdata", "test.fasta", package = "topo")
+gap_dist = topodist(fasta_path, metric = "gaps")
+gap_dist
+}
+\references{
+Paradis, E., & Schliep, K. (2019). ape 5.0: an environment for modern
+phylogenetics and evolutionary analyses in R. \emph{Bioinformatics}, 35(3),
+526--528. \doi{10.1093/bioinformatics/bty633}
 }

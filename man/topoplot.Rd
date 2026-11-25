@@ -2,37 +2,74 @@
 % Please edit documentation in R/topoplot.R
 \name{topoplot}
 \alias{topoplot}
-\title{Plot Combined Dendrogram and Heatmap}
+\title{Plot Combined Topological Dendrogram, Clusters, and Alignment}
 \usage{
 topoplot(
-  fasta_path,
-  metric = "gaps",
+  fasta_path = NULL,
+  metric = c("gaps", "residues", "both"),
   highlight_regions = NULL,
   highlight_colors = NULL,
   bootstrap = 1,
-  boot_threshold = NULL
+  boot_threshold = NULL,
+  deepSplit = 2,
+  minClusterSize = 2
 )
 }
 \arguments{
-\item{fasta_path}{Path to the alignment fasta file or an XStringSet object.}
+\item{fasta_path}{Path to a FASTA alignment file or an \code{ape::AAbin} /
+\code{ape::DNAbin} object.}
 
-\item{metric}{Distance metric ("gaps", "residues", "both").}
+\item{metric}{Distance metric (\code{"gaps"}, \code{"residues"}, or \code{"both"}).}
 
-\item{highlight_regions}{List of numeric vectors indicating column indices to highlight.}
+\item{highlight_regions}{Optional list of positive integer vectors defining
+alignment column indices to highlight.}
 
-\item{highlight_colors}{Character vector of hex codes corresponding to highlight_regions.}
+\item{highlight_colors}{Optional character vector of colors corresponding to
+\code{highlight_regions}. Defaults to \code{"Set 2"} from \code{grDevices::hcl.colors()}.}
 
-\item{bootstrap}{Optional: Bootstrap iterations. When set to 1, bootstrap is omitted.}
+\item{bootstrap}{Positive integer number of bootstrap replicates. When \code{1}
+(default), bootstrapping is omitted.}
 
-\item{boot_threshold}{Optional: Numeric threshold below which nodes are collapsed into a polytomy.}
+\item{boot_threshold}{Optional numeric percentage in \verb{[0, 100]} below which
+internal nodes are collapsed into polytomies.}
+
+\item{deepSplit}{Cluster splitting sensitivity passed to \code{topoclust()}.
+Default is \code{2}.}
+
+\item{minClusterSize}{Minimum cluster size passed to \code{topoclust()}. Default
+is \code{2}.}
 }
 \value{
-A combined ggtree plot object.
+A combined \code{ggtree}/\code{ggplot} object.
 }
 \description{
-Plot Combined Dendrogram and Heatmap
+Wrapper that computes alignment topological distances, dynamic
+tree-cut clusters, and an optionally bootstrapped UPGMA dendrogram, then
+renders them together with the alignment and optional domain
+highlights.
+}
+\details{
+Runs \code{topodist()}, \code{topoclust()}, and \code{topodend()} once and
+passes the cached objects through the plotting pipeline to avoid redundant
+I/O or distance computations. See \code{topodist()} for metric definitions,
+\code{topoclust()} for dynamic clustering parameters, and \code{topodend()} for
+bootstrap and polytomy collapsing.
+
+For reproducible bootstrap values and clustering, call \code{set.seed()} prior to
+running \code{topoplot()}.
 }
 \examples{
-fasta_path <- system.file("extdata", "test.fasta", package = "topo")
-final_plot <- topoplot(fasta_path, metric = "gaps")
+fasta_path = system.file("extdata", "test.fasta", package = "topo")
+final_plot = topoplot(fasta_path, metric = "gaps")
+final_plot
+}
+\references{
+Langfelder, P., Zhang, B., & Horvath, S. (2008). Defining clusters from a
+hierarchical cluster tree: the Dynamic Tree Cut package for R.
+\emph{Bioinformatics}, 24(5), 719--720. \doi{10.1093/bioinformatics/btm563}
+
+Yu, G., Smith, D. K., Zhu, H., Guan, Y., & Lam, T. T.-Y. (2017). ggtree: an
+R package for visualization and annotation of phylogenetic trees with their
+covariates and other associated data. \emph{Methods in Ecology and Evolution},
+8(1), 28--36. \doi{10.1111/2041-210X.12628}
 }

@@ -9,24 +9,51 @@
 
 **Evaluating gap and residue topologies in sequence alignments**
 
-`topo` is an R package for clustering sequences based on the topology of
-residues and/or gaps, i.e. it compares how distinct they are, allowing
-researchers to get concrete metrics instead of just eyeballing
-structural differences. It provides publication-ready figures that
-combine a dendrogram, dynamic clusters, and sequence alignments into a
-single plot.
+`topo` is an R package for clustering and visualizing multiple sequence
+alignments based on the structural topology of residues and gaps,
+providing concrete, reproducible metrics rather than relying on visual
+inspection alone. It generates publication-ready figures that integrate
+an optionally bootstrapped UPGMA dendrogram, dynamic cluster
+assignments, and an highlighted alignment into a single plot.
 
-It works by turning the alignment into a binary matrix and calculating
-distances based on residue and/or gap positions. Then, it dynamically
-clusters protein alignments, allowing more precision on unbalanced
-datasets. It also supports bootstrapping, visual polytomy condensation,
-and the highlighting of relevant regions within the alignment matrix.
+## Scientific Context
+
+Traditional substitution-based phylogenetic methods (e.g., Maximum
+Likelihood or Bayesian inference) optimize for point-substitution
+history and typically treat alignment gaps as missing data or under
+simplified indel models. While indispensable for inferring evolutionary
+descent, they can obscure large-scale structural rearrangements such as
+domain losses, splice isoforms, or lineage-specific insertion/deletion
+(indel) architectures.
+
+`topo` is designed as a **complementary** structural analysis step:
+
+- **Choice of metrics (`topodist()`)**: Alignments are encoded as binary
+  matrices (`1` = gap, `0` = residue), deduplicated into unique
+  patterns, and compared using one of three metrics:
+  - `"gaps"` (Jaccard distance on gaps): Ignores shared residue
+    positions (double-zeros) to isolate shared indel signatures.
+  - `"residues"` (Jaccard distance on residues): Ignores shared gap
+    blocks to focus on shared occupied domain architecture.
+  - `"both"` (normalized Hamming distance): Weights shared gaps and
+    shared residues symmetrically across all columns.
+- **Dynamic tree cutting (`topoclust()`)**: Instead of a fixed height
+  threshold—which struggles with unbalanced datasets or clades diverging
+  at different rates—`topo` applies the hybrid Dynamic Tree Cut
+  algorithm (Langfelder, Zhang, & Horvath, 2008), detecting nested
+  clusters from branch shape. Topologies labeled `"Unassigned"` do not
+  belong to a group of at least `minClusterSize` distinct topologies
+  (default `2`).
+- **Bootstrap & polytomies (`topodend()`)**: Column resampling via
+  `ape::boot.phylo()` reports node support as percentages (`0`–`100%`).
+  Collapsing low-support branches below `boot_threshold` redistributes
+  collapsed lengths to child edges.
 
 ## Installation
 
 Because `topo` relies on the Bioconductor package `ggtree` for
-phylogenetic visualization, you must install `ggtree` via `BiocManager`
-before installing `topo`.
+phylogenetic visualization, install `ggtree` via `BiocManager` before
+installing `topo`.
 
 ``` r
 # 1. Install BiocManager if you don't have it
@@ -38,13 +65,13 @@ BiocManager::install("ggtree")
 
 # 3. Install topo from GitHub
 # install.packages("devtools")
-devtools::install_github("martimdfreitas/topo")
+devtools::install_github("martimdfreitasg/topo")
 ```
 
 ## Example
 
 The package includes a synthetic dataset (`test.fasta`) to demonstrate
-the use of the main visualization function (`topoplot`).
+the main visualization function (`topoplot()`).
 
 ``` r
 library(topo)
@@ -53,18 +80,16 @@ library(topo)
 fasta_path <- system.file("extdata", "test.fasta", package = "topo")
 
 # Generate the complete plot
+set.seed(12345)
 p <- topoplot(
   fasta_path = fasta_path,
-  metric = "gaps",                  # Distance metrics: "gaps" (Jaccard), "residues" (Jaccard), or "both" (Hamming)
-  bootstrap = 100,                  # Number of bootstrap iterations
-  boot_threshold = 70,              # Collapses nodes with bootstrap support < 70 into polytomies
+  metric = "gaps",                  # "gaps" (Jaccard), "residues" (Jaccard), or "both" (Hamming)
+  bootstrap = 100,                  # Number of bootstrap replicates
+  boot_threshold = 70,              # Collapses nodes with < 70% bootstrap support into polytomies
   highlight_regions = list(1:100),  # Structural domains to highlight in the matrix
-  highlight_colors = c("#cd5cd8")   # Hex colors for the highlighted regions
+  highlight_colors = c("#cd5cd8")   # Hex colors for highlighted regions
 )
-#> Running bootstraps:       100 / 100
-#> Calculating bootstrap values... done.
 
-# Render the plot
 p
 ```
 
@@ -72,19 +97,20 @@ p
 
 ### Retrieving Groups
 
-The `topoclust` function can be used to retrieve information regarding
-the members of each identified cluster, as well as to map which groups
-the duplicated sequences belong to.
+Use `topoclust()` to inspect how original sequences map onto
+deduplicated topology groups and dynamic clusters. You can tune how deep
+on the tree the clusters are formed with `deepSplit` (`0`–`4`) and
+`minClusterSize`.
 
 ``` r
-# Extract the cluster mapping dataframe
 set.seed(12345)
 cluster_data <- topoclust(
-  fasta_path = fasta_path, 
-  metric = "gaps"
+  fasta_path = fasta_path,
+  metric = "gaps",
+  deepSplit = 2,
+  minClusterSize = 2
 )
 
-# View the first few sequence assignments
 head(cluster_data)
 #>   Original_Sequence Assigned_Group    Cluster
 #> 1           Seq_One        Group 1  Cluster 1
@@ -94,3 +120,27 @@ head(cluster_data)
 #> 5          Seq_Five       Seq_Five Unassigned
 #> 6           Seq_Six        Seq_Six  Cluster 1
 ```
+
+## References
+
+- Langfelder, P., Zhang, B., & Horvath, S. (2008). Defining clusters
+  from a hierarchical cluster tree: the Dynamic Tree Cut package for R.
+  *Bioinformatics*, 24(5), 719–720.
+  <https://doi.org/10.1093/bioinformatics/btm563>
+- Paradis, E., & Schliep, K. (2019). ape 5.0: an environment for modern
+  phylogenetics and evolutionary analyses in R. *Bioinformatics*, 35(3),
+  526–528. <https://doi.org/10.1093/bioinformatics/bty633>
+- Yu, G., Smith, D. K., Zhu, H., Guan, Y., & Lam, T. T.-Y. (2017).
+  ggtree: an R package for visualization and annotation of phylogenetic
+  trees with their covariates and other associated data. *Methods in
+  Ecology and Evolution*, 8(1), 28–36.
+  <https://doi.org/10.1111/2041-210X.12628>
+
+## Citation
+
+If you use `topo` in your research, please cite it:
+
+> de Freitas, M., Stumpo, P., Guerra-Guimarães, L., Muñoz-Pajares, A.
+> J., & Pinheiro, C. (2026). *topo: Evaluating Gap and Residue
+> Topologies in Sequence Alignments*. R package version 0.1.0.
+> <https://github.com/martimdfreitasg/topo>

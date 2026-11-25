@@ -2,37 +2,67 @@
 % Please edit documentation in R/topomap.R
 \name{topomap}
 \alias{topomap}
-\title{Plot Alignment Matrix and Clusters}
+\title{Plot Alignment and Cluster Ribbon}
 \usage{
 topomap(
-  fasta_path,
-  metric = "gaps",
+  fasta_path = NULL,
+  metric = c("gaps", "residues", "both"),
   highlight_regions = NULL,
   highlight_colors = NULL,
   dist_mat = NULL,
-  cluster_mapping = NULL
+  cluster_mapping = NULL,
+  deepSplit = 2,
+  minClusterSize = 2
 )
 }
 \arguments{
-\item{fasta_path}{Path to the alignment fasta file or an XStringSet object.}
+\item{fasta_path}{Path to a FASTA alignment file or an \code{ape::AAbin} /
+\code{ape::DNAbin} object. Optional if \code{dist_mat} is provided.}
 
-\item{metric}{Distance metric ("gaps", "residues", "both").}
+\item{metric}{Distance metric (\code{"gaps"}, \code{"residues"}, or \code{"both"}).}
 
-\item{highlight_regions}{List of numeric vectors indicating column indices to highlight.}
+\item{highlight_regions}{Optional list of positive integer vectors defining
+alignment column indices to highlight.}
 
-\item{highlight_colors}{Character vector of hex codes corresponding to highlight_regions.}
+\item{highlight_colors}{Optional character vector of colors corresponding to
+\code{highlight_regions}. Defaults to \code{"Set 2"} from \code{grDevices::hcl.colors()}.}
 
-\item{dist_mat}{Optional: Pre-calculated distance matrix from topodist().}
+\item{dist_mat}{Optional pre-calculated \code{dist} object from \code{topodist()}.}
 
-\item{cluster_mapping}{Optional: Pre-calculated mapping from topoclust().}
+\item{cluster_mapping}{Optional pre-calculated mapping \code{data.frame} from
+\code{topoclust()}.}
+
+\item{deepSplit}{Cluster splitting sensitivity passed to \code{topoclust()} when
+\code{cluster_mapping} is \code{NULL}. Default is \code{2}.}
+
+\item{minClusterSize}{Minimum cluster size passed to \code{topoclust()} when
+\code{cluster_mapping} is \code{NULL}. Default is \code{2}.}
 }
 \value{
-A ggtree plot object containing the alignment heatmap and cluster ribbon.
+A \code{ggtree}/\code{ggplot} object containing the alignment topology heatmap
+and cluster ribbon.
 }
 \description{
-Plot Alignment Matrix and Clusters
+Visualizes the sequence alignment (residues vs. gaps)
+alongside its cluster membership ribbon, ordered according to the
+UPGMA dendrogram without drawing the tree branches.
+}
+\details{
+Residues are drawn in dark gray (\code{"#333333"}) and gaps in white
+(\code{"#ffffff"}). Optional \code{highlight_regions} recolor occupied residue cells
+within specified alignment column ranges to mark domains or motifs of
+interest; if two regions overlap, a warning is issued and the earlier region
+takes precedence. Topologies classified as \code{"Unassigned"} by
+\code{topoclust()} are colored neutral gray (\code{"#BDBDBD"}).
 }
 \examples{
-fasta_path <- system.file("extdata", "test.fasta", package = "topo")
-map_plot <- topomap(fasta_path, metric = "gaps")
+fasta_path = system.file("extdata", "test.fasta", package = "topo")
+map_plot = topomap(fasta_path, metric = "gaps")
+map_plot
+}
+\references{
+Yu, G., Smith, D. K., Zhu, H., Guan, Y., & Lam, T. T.-Y. (2017). ggtree: an
+R package for visualization and annotation of phylogenetic trees with their
+covariates and other associated data. \emph{Methods in Ecology and Evolution},
+8(1), 28--36. \doi{10.1111/2041-210X.12628}
 }

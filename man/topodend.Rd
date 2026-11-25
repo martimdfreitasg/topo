@@ -2,12 +2,12 @@
 % Please edit documentation in R/topodend.R
 \name{topodend}
 \alias{topodend}
-\title{Plot Distance Dendrogram}
+\title{Plot Topological Distance Dendrogram}
 \usage{
 topodend(
-  fasta_path,
+  fasta_path = NULL,
   topomatrix = NULL,
-  metric = "gaps",
+  metric = c("gaps", "residues", "both"),
   dist_mat = NULL,
   bootstrap = 1,
   show_tiplab = TRUE,
@@ -15,27 +15,69 @@ topodend(
 )
 }
 \arguments{
-\item{fasta_path}{Path to the alignment fasta file or an XStringSet object.}
+\item{fasta_path}{Path to a FASTA alignment file or an \code{ape} \code{AAbin}/\code{DNAbin}
+object.
 
-\item{topomatrix}{Optional: Pre-processed matrix to override fasta path.}
+Optional if \code{dist_mat} or \code{topomatrix} is provided.}
 
-\item{metric}{Distance metric ("gaps", "residues", "both").}
+\item{topomatrix}{Optional numeric binary matrix passed to \code{topodist()}.}
 
-\item{dist_mat}{Optional: Pre-calculated distance matrix from topodist().}
+\item{metric}{Distance metric (\code{"gaps"}, \code{"residues"}, or \code{"both"}). Ignored
+when \code{dist_mat} carries a \code{"metric"} attribute from \code{topodist()}.}
 
-\item{bootstrap}{Optional: Bootstrap iterations. When set to 1, bootstrap is omitted.}
+\item{dist_mat}{Optional pre-calculated \code{dist} object from \code{topodist()}.}
 
-\item{show_tiplab}{Optional: Logical to toggle tip labels on the base tree. Default is TRUE.}
+\item{bootstrap}{Positive integer number of bootstrap replicates. When \code{1}
+(default), bootstrapping is omitted.}
 
-\item{boot_threshold}{Optional: Numeric threshold below which nodes are collapsed into a polytomy.}
+\item{show_tiplab}{Logical indicating whether to display tip labels on the
+dendrogram. Default is \code{TRUE}.}
+
+\item{boot_threshold}{Optional numeric percentage in \verb{[0, 100]}. Internal
+nodes with bootstrap support strictly below this threshold are collapsed
+into polytomies.}
 }
 \value{
-A list containing the raw phylo object and the rendered ggtree object.
+A list with two elements:
+\itemize{
+\item \code{as_phylo}: The \code{ape::phylo} dendrogram (with bootstrap percentage
+\code{node.label}s and collapsed edges if requested).
+\item \code{as_ggtree}: The rendered \code{ggtree}/\code{ggplot} object.
+}
 }
 \description{
-Plot Distance Dendrogram
+Constructs an average-linkage (UPGMA) dendrogram from alignment topological
+distances, with optional column-resampling bootstrap support and
+polytomy condensation for weakly supported nodes.
+}
+\details{
+When \code{bootstrap > 1}, alignment columns are resampled with replacement via
+\code{ape::boot.phylo()}. Because \code{ape::boot.phylo()} returns raw replicate
+counts, values are automatically converted to percentages (\code{0} to \code{100})
+before labeling internal nodes and comparing against \code{boot_threshold}.
+
+When \code{boot_threshold} is set, internal edges leading to nodes with bootstrap
+support strictly below \code{boot_threshold} are collapsed to length \code{0} in
+root-to-tip (\code{"cladewise"}) order, and each collapsed edge's length is
+redistributed to its immediate child edges. This preserves the ultrametric
+tip depth of the UPGMA dendrogram so the distance scale axis remains exact
+for all tips and surviving nodes.
+
+For reproducible bootstrap values, call \code{set.seed()} prior to running
+\code{topodend()}.
 }
 \examples{
-fasta_path <- system.file("extdata", "test.fasta", package = "topo")
-dend <- topodend(fasta_path, metric = "gaps")
+fasta_path = system.file("extdata", "test.fasta", package = "topo")
+dend = topodend(fasta_path, metric = "gaps")
+dend$as_ggtree
+}
+\references{
+Felsenstein, J. (1985). Confidence limits on phylogenies: an approach using
+the bootstrap. \emph{Evolution}, 39(4), 783--791.
+\doi{10.1111/j.1558-5646.1985.tb00420.x}
+
+Yu, G., Smith, D. K., Zhu, H., Guan, Y., & Lam, T. T.-Y. (2017). ggtree: an
+R package for visualization and annotation of phylogenetic trees with their
+covariates and other associated data. \emph{Methods in Ecology and Evolution},
+8(1), 28--36. \doi{10.1111/2041-210X.12628}
 }

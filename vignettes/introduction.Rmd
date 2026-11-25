@@ -17,13 +17,15 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Overview
+## Overview and Scientific Context
 
-In traditional phylogenetic analysis, standard substitution models are typically used to build evolutionary trees. However, in structurally diverse datasets, the specific topology of insertions and deletions (indels) provides crucial evolutionary and functional context that is overlooked. These structural shifts tend to be evaluated qualitatively by visually inspecting alignments, rather than applying concrete metrics to assess how sequences differ in their gap or residue distributions. 
+Traditional phylogenetic inference (e.g., Maximum Likelihood or Bayesian Inference) relies on amino acid or nucleotide substitution models to reconstruct evolutionary history. Under most standard models, alignment gaps are treated as missing data or modeled crudely, which can mask large-scale structural shifts such as domain deletions, splice variants, or clade-specific insertion/deletion (indel) architectures. In practice, these patterns are often assessed qualitatively by visually inspecting alignments.
 
-The `topo` package is designed to explicitly quantify these topological shifts. It allows researchers to move beyond eyeballing alignments by providing rigorous distance metrics based on gap and/or residue architectures, and guide the initial part of more complex pipelines. 
+`topo` provides a **complementary** structural analysis layer rather than a replacement for substitution-based phylogenetics. By encoding an alignment as a binary matrix (`1` = gap, `0` = residue), it quantifies how sequences cluster by their structural architecture:
 
-This vignette demonstrates how to extract topology-based distance matrices, dynamically cluster sequences, and generate publication-ready visualizations. While `topo` supports gap, residue, and combined Hamming distances, this tutorial focuses on evaluating **gap topology**, on a protein alignment.
+- **`"gaps"` (asymmetric Jaccard distance on gaps):** Ignores shared residue positions (double-zeros) and measures dissimilarity strictly across shared indel patterns. This is the default metric and the focus of this tutorial.
+- **`"residues"` (asymmetric Jaccard distance on residues):** Ignores shared gap blocks and measures dissimilarity across occupied positions, which is useful for sparse alignments with lineage-specific insertions or partial sequences.
+- **`"both"` (normalized Hamming distance):** Treats gap and residue matches symmetrically across all alignment columns.
 
 ```{r setup, message=FALSE, warning=FALSE}
 library(topo)
@@ -31,11 +33,7 @@ library(topo)
 
 ## 1. Calculating Topological Distances
 
-The first step in the pipeline is computing the distance matrix using `topodist()`. 
-
-Distances can be evaluated based on gap presence/absence (`metric = "gaps"`), residue presence/absence (`metric = "residues"`), or a combined topological distance (`metric = "both"`). 
-
-For this example, we will isolate the structural presence and absence of indels. `topodist()` converts the sequence alignment into a binary matrix and calculates the **Jaccard distance**, deduplicating identical structural architectures.
+The pipeline begins with `topodist()`, which reads a FASTA alignment (or an `ape::AAbin` / `ape::DNAbin` object), converts it into a binary matrix, deduplicates sequences sharing the same topology into representative groups (`"Group 1"`, `"Group 2"`, etc.), and computes the pairwise distance matrix.
 
 ```{r distances}
 # Locate the synthetic FASTA alignment bundled with the package
@@ -45,16 +43,21 @@ fasta_path <- system.file("extdata", "test.fasta", package = "topo")
 gap_matrix <- topodist(fasta_path, metric = "gaps")
 ```
 
-## 2. Structural Clustering
+## 2. Dynamic Structural Clustering
 
-With the topological distance matrix computed, `topoclust()` applies Average Linkage (UPGMA) hierarchical clustering. It utilizes the `dynamicTreeCut` algorithm to assign sequences into discrete structural groups, an approach effective for managing unbalanced datasets. 
+With topological distances computed, `topoclust()` builds an average-linkage (UPGMA) dendrogram and detects clusters via the hybrid Dynamic Tree Cut algorithm (Langfelder, Zhang, & Horvath, 2008). Unlike static height cutoffs—which often split compact clades or merge divergent ones in unbalanced datasets—dynamic tree cutting adapts to local branch structure.
 
-Because `topodist()` deduplicates sequences under the hood, `topoclust()` instantly maps the original duplicated FASTA entries back to their respective assigned groups.
+You can tune cluster granularity using `deepSplit` (`0` to `4`, where higher values yield more, smaller clusters) and `minClusterSize` (the minimum number of distinct topologies required to form a cluster). Topologies labeled `"Unassigned"` correspond to the ones that did not group with at least `minClusterSize` distinct topologies.
 
 ```{r clustering}
-# Extract the cluster mapping dataframe
+# Set a seed for reproducible tie handling, then extract cluster mappings
 set.seed(12345)
-clusters <- topoclust(fasta_path, metric = "gaps")
+clusters <- topoclust(
+  fasta_path,
+  metric = "gaps",
+  deepSplit = 2,
+  minClusterSize = 2
+)
 
 # View the first few sequence assignments
 head(clusters)
@@ -62,36 +65,40 @@ head(clusters)
 
 ## 3. Visualization: Polytomies and Domain Highlighting
 
-The master wrapper `topoplot()` combines distance calculation, clustering, and dendrogram generation into a single, aligned `ggtree` visualization. It introduces two QOL features for biological interpretation: **Visual Polytomies** and **Region Highlighting**.
+The wrapper `topoplot()` integrates the distance dendrogram, cluster ribbon, and binary alignment matrix (a *de facto* multiple sequence alignment) into a single `ggtree` figure.
 
-### Visual Polytomies
-By setting a `boot_threshold`, branches that fail to meet a required bootstrap support percentage are visually collapsed into polytomies (branch length = 0). This prevents low-confidence dichotomies from misleading visual interpretation, all without altering the underlying binary matrix required by the clustering algorithm.
+### Percentage Bootstrapping and Ultrametric Polytomies
+
+Setting `bootstrap > 1` resamples alignment columns with replacement via `ape::boot.phylo()` and converts raw replicate counts into support percentages (`0`–`100%`). When `boot_threshold` is supplied, internal branches with support strictly below that percentage are collapsed to length `0`, and their lengths are redistributed to immediate child edges. This eliminates misleading low-confidence dichotomies while preserving exact root-to-tip depths so the UPGMA distance scale remains valid across all tips and surviving nodes.
 
 ### Highlighting Functional Domains
-A major advantage of `topo` is the ability to map specific biological features—such as signal peptides, transmembrane domains, or conserved active sites—directly onto the alignment matrix. By passing a list of column indices to `highlight_regions` and assigning hex codes in `highlight_colors`, you can contextualize structural topologies relative to known functional domains. 
+
+Passing a list of column index vectors to `highlight_regions` (with optional `highlight_colors`) overlays user-chosen regions, such as signal peptides, transmembrane helices or conserved active sites directly onto the alignment matrix.
 
 ```{r plot, fig.align='center', fig.width=10, fig.height=6}
-# Generate the full phylogenetic topology heatmap
+# Set a seed for reproducible bootstrap support values
+set.seed(12345)
+
 p <- topoplot(
   fasta_path = fasta_path,
   metric = "gaps",
-  bootstrap = 100,                  
-  boot_threshold = 70,              # Visually collapse branches with <70% support
-  
-  # Highlight multiple distinct structural domains (e.g., a signal peptide and an active site)
-  highlight_regions = list(1:100, 150:180),  
-  highlight_colors = c("#cd5cd8", "#42b9f5")   
+  bootstrap = 100,
+  boot_threshold = 70,
+  highlight_regions = list(1:100, 150:180),
+  highlight_colors = c("#cd5cd8", "#42b9f5")
 )
 
 p
 ```
 
 ### Interpreting the Plot
-In the resulting figure:
 
-*   **The Dendrogram (Left):** Branch lengths represent the chosen distance metric (e.g., Jaccard distance between gap profiles). Visually flat, multi-pronged branches indicate low-confidence polytomies.
-*   **The Cluster Ribbon (Middle):** Dynamically assigned structural groups.
-*   **The Matrix (Right):** White blocks represent gap regions (indels), while dark grey blocks represent amino acid residues. 
-*   **The Highlights:** The colored blocks overlaying the matrix correspond to domains defined in `highlight_regions`, allowing you to see exactly which clusters share deletions or insertions within those biological zones. 
+- **Dendrogram (Left):** Branch heights correspond to the chosen topological distance metric. Multi-furcating nodes indicate collapsed branches whose bootstrap support fell below `boot_threshold`.
+- **Clusters (Middle):** Assigned clusters from `topoclust()`. Any `"Unassigned"` topologies are rendered in neutral gray (`#BDBDBD`).
+- **Alignment (Right):** White blocks represent gaps (indels) and dark gray blocks represent residue positions. Colored residues within `highlight_regions` correspond to the highlighted residues chosen by the user, indicating which sequences retain or lose specific functional domains.
 
-By layering domain highlights over topological clustering, researchers can rapidly classify sequences based on physical architecture differences that directly impact protein function.
+## References
+
+- Langfelder, P., Zhang, B., & Horvath, S. (2008). Defining clusters from a hierarchical cluster tree: the Dynamic Tree Cut package for R. *Bioinformatics*, 24(5), 719–720. <https://doi.org/10.1093/bioinformatics/btm563>
+- Paradis, E., & Schliep, K. (2019). ape 5.0: an environment for modern phylogenetics and evolutionary analyses in R. *Bioinformatics*, 35(3), 526–528. <https://doi.org/10.1093/bioinformatics/bty633>
+- Yu, G., Smith, D. K., Zhu, H., Guan, Y., & Lam, T. T.-Y. (2017). ggtree: an R package for visualization and annotation of phylogenetic trees with their covariates and other associated data. *Methods in Ecology and Evolution*, 8(1), 28–36. <https://doi.org/10.1111/2041-210X.12628>

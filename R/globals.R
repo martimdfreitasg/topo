@@ -1,1 +1,1 @@
-utils::globalVariables(c("label", "isTip"))
+utils::globalVariables("label")

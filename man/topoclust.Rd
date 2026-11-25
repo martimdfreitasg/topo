@@ -2,24 +2,67 @@
 % Please edit documentation in R/topoclust.R
 \name{topoclust}
 \alias{topoclust}
-\title{Extract Cluster and Group Mapping}
+\title{Extract Dynamic Topological Cluster Assignments}
 \usage{
-topoclust(fasta_path, metric = "gaps", dist_mat = NULL)
+topoclust(
+  fasta_path = NULL,
+  metric = c("gaps", "residues", "both"),
+  dist_mat = NULL,
+  deepSplit = 2,
+  minClusterSize = 2
+)
 }
 \arguments{
-\item{fasta_path}{Path to the alignment fasta file or an XStringSet object.}
+\item{fasta_path}{Path to a FASTA alignment file or an \code{ape::AAbin} /
+\code{ape::DNAbin} object. Optional if \code{dist_mat} is provided.}
 
-\item{metric}{Distance metric ("gaps", "residues", "both").}
+\item{metric}{Distance metric passed to \code{topodist()} when \code{dist_mat} is
+\code{NULL}: one of \code{"gaps"} (default), \code{"residues"}, or \code{"both"}.}
 
-\item{dist_mat}{Optional: Pre-calculated distance matrix from topodist().}
+\item{dist_mat}{Optional pre-calculated \code{dist} object from \code{topodist()}.}
+
+\item{deepSplit}{Controls cluster splitting sensitivity in
+\code{dynamicTreeCut::cutreeDynamic()}. Accepts an integer in \code{0:4} (higher
+values produce more, smaller clusters) or a logical. Default is \code{2}.}
+
+\item{minClusterSize}{Minimum number of distinct sequence topologies
+required to form a cluster. Default is \code{2}.}
 }
 \value{
-A dataframe mapping original sequences to their deduplicated group and assigned cluster.
+A \code{data.frame} with three columns:
+\itemize{
+\item \code{Original_Sequence}: Original sequence header from the input.
+\item \code{Assigned_Group}: Deduplicated topology group or singleton name.
+\item \code{Cluster}: Factor indicating cluster membership (\code{"Cluster 1"},
+\code{"Cluster 2"}, ..., and \code{"Unassigned"} if present).
+}
 }
 \description{
-Extract Cluster and Group Mapping
+Performs average-linkage (UPGMA) hierarchical clustering on alignment
+topological distances and identifies discrete clusters via dynamic tree
+cutting.
+}
+\details{
+Rather than applying a single static height threshold, which performs poorly
+when sequence clades diverge unevenly or have unbalanced sizes, clusters are
+made from dendrogram branch shape using
+\code{dynamicTreeCut::cutreeDynamic()} with the hybrid method (\code{pamStage = TRUE}).
+
+Sequences labeled \code{"Unassigned"} represent topologies that could not be
+grouped into a cluster meeting \code{minClusterSize} distinct topologies; this
+indicates an isolated structural pattern rather than a data error.
+
+To obtain reproducible results if clustering ties occur, call
+\code{set.seed()} prior to running \code{topoclust()}.
 }
 \examples{
-fasta_path <- system.file("extdata", "test.fasta", package = "topo")
-clusters <- topoclust(fasta_path, metric = "gaps")
+fasta_path = system.file("extdata", "test.fasta", package = "topo")
+set.seed(12345)
+clusters = topoclust(fasta_path, metric = "gaps")
+head(clusters)
+}
+\references{
+Langfelder, P., Zhang, B., & Horvath, S. (2008). Defining clusters from a
+hierarchical cluster tree: the Dynamic Tree Cut package for R.
+\emph{Bioinformatics}, 24(5), 719--720. \doi{10.1093/bioinformatics/btm563}
 }
